@@ -23,7 +23,8 @@ def get_url_content(url):
     try:
         with closing(get(url, stream=True)) as response:
             if checkResponse(response):
-                return response.content
+                html = response.content
+                return html
 
     except RequestException as e:
         print(str(e))
@@ -32,10 +33,54 @@ def get_url_content(url):
 
 def checkResponse(response):
     goodResponse = False
+    print(response.status_code)
     if response.status_code == 200:
         goodResponse = True
 
     return goodResponse
+
+class PageInfo:
+    def __init__(self, url):
+        self.url = url
+        self.pageInfo = self.getPageInfo()
+
+    def getPageInfo(self):
+        pageInfo = dict()
+
+        if URL_ADDON['NAME'] in self.url:
+            pageInfo = self.getNamePageInfo()
+
+        elif URL_ADDON['TITLE'] in self.url:
+            pageInfo = self.getTitlePageInfo()
+
+        return pageInfo
+
+    def getTitlePageInfo(self):
+        pageInfo = {'TITLE': str(),
+                    'YEAR': int(),
+                    'GENRES': list(),
+                    'DIRECTOR': list(),
+                    'WRITERS': list(),
+                    'RUNTIME': str(),
+                    'RATING': str()
+                    }
+
+        # TODO: parse above movie page info
+
+
+        return pageInfo
+
+    def getNamePageInfo(self):
+        pageInfo = {'NAME': str(),
+                    'DOB': str(),
+                    'ACTOR': list(),
+                    'WRITER': list(),
+                    'DIRECTOR': list()
+                    }
+
+        # TODO: parse above name page info
+
+        return pageInfo
 
 
 class Search:
@@ -66,31 +111,26 @@ class Search:
 
         if urlContent != '' and self.getSearchURL() != self.getInitTitleSearchURL():
             html = bs(urlContent, 'html.parser')
-            rawList = html.find_all('div', class_='lister-item mode-advanced')
+            rawList = html.find_all('div', class_='lister-item mode-advanced', limit=10)
 
             if self.getInitNameSearchURL() in self.getSearchURL():
-                rawList = html.find_all('div', class_='lister-item mode-detail')
+                rawList = html.find_all('div', class_='lister-item mode-detail', limit=10)
 
-            # To minimize time spent parsing info, number of list items will be reduced to 5
-            listRange = 5
+            # To minimize time spent parsing info, number of list items will be reduced to 10
 
-            if len(rawList) < listRange:
-                listRange = len(rawList)
-
-            for listItem in range(listRange):
+            for listItem in rawList:
                 searchInfo = list()
 
-                name = str(rawList[listItem].h3.a.text).lstrip().replace("\n", '')
+                name = str(listItem.h3.a.text).lstrip().replace("\n", '')
                 searchInfo.append(name)
 
                 if self.getInitTitleSearchURL() in self.getSearchURL():
-                    searchInfo.append(rawList[listItem].find('span', class_='lister-item-year text-muted unbold').text)
+                    searchInfo.append(listItem.find('span', class_='lister-item-year text-muted unbold').text)
 
-                searchInfo.append(str(DEFAULT_PATH + rawList[listItem].a['href']))
+                searchInfo.append(str(DEFAULT_PATH + listItem.a['href']))
                 searchList.append(searchInfo)
 
         else:
             print('Bad Link or No Search Criteria')
 
         return searchList
-
