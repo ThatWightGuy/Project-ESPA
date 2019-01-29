@@ -2,6 +2,7 @@ from requests import get
 from requests.exceptions import RequestException
 from bs4 import BeautifulSoup as bs
 from contextlib import closing
+import re
 import webbrowser as wb
 
 DEFAULT_PATH = "https://www.imdb.com"
@@ -42,7 +43,6 @@ def checkResponse(response):
 class PageInfo:
     def __init__(self, url):
         self.url = url
-        self.pageInfo = self.getPageInfo()
 
     def getPageInfo(self):
         pageInfo = dict()
@@ -55,27 +55,108 @@ class PageInfo:
 
         return pageInfo
 
+    def getRuntime(self, runtime=str()):
+        timelist = runtime.split(' ')
+
+        return (int(timelist[0].replace('h', '')) * 60) + (int(timelist[1].replace('min', '')))
+
     def getTitlePageInfo(self):
         pageInfo = {'TITLE': str(),
                     'YEAR': int(),
                     'GENRES': list(),
+                    'RUNTIME': int(),
+                    'RATING': str(),
+                    'POSTER': str(),
+                    'CAST': dict(),
                     'DIRECTOR': list(),
-                    'WRITERS': list(),
-                    'RUNTIME': str(),
-                    'RATING': str()
+                    'WRITERS': list()
                     }
 
-        # TODO: parse above movie page info
+        urlContent = get_url_content(self.url)
+        html = bs(urlContent, 'html.parser')
 
+        # get everything in title bar
+        titleBar = html.find('div', class_='titleBar')
+        subText = titleBar.find('div', class_='subtext')
+        plot_summary = html.find('div', class_='plot_summary')
+
+        # get the cast list
+        castList = html.find('table', class_='cast_list')
+
+        # POSTER:
+        poster = html.find('div', class_='poster')
+
+        # TITLE:
+        title = titleBar.find('div', class_='title_wrapper').h1
+
+        # YEAR:
+        year = title.span
+        year.extract()
+
+        # RATING:
+        rating = subText
+
+        # RUNTIME:
+        runtime = rating.time
+        runtime.extract()
+
+        # GENRES:
+        genres = rating.findAll('a')
+
+        for genre in genres:
+            pageInfo['GENRES'].append(str(genre.text).lower())
+            genre.extract()
+
+        # remove the release date from the GENRES list
+        pageInfo['GENRES'].pop()
+
+        # DIRECTOR and WRITERS:
+        summaryItems = plot_summary.find_all('div', class_='credit_summary_item')
+
+        for item in summaryItems:
+            if any(word in str(item.h4.text) for word in ['Writers:', 'Writer:', 'Directors:', 'Director:']):
+                names = item.findAll('a')
+
+                for name in names:
+                    if 'more credit' not in str(name.text):
+                        if any(word in str(item.h4.text) for word in ['Writers:', 'Writer:']):
+                            pageInfo['WRITERS'].append(str(name.text))
+                        else:
+                            pageInfo['DIRECTOR'].append(str(name.text))
+
+        # CAST:
+        castItems = castList.find_all('tr')
+
+        for item in range(len(castItems)):
+            if item > 0:
+                castMember = dict()
+
+                # ACTOR NAME
+                actorName = castItems[item]
+                actorName.td.extract()
+
+                castMember['ACTOR_LINK'] = DEFAULT_PATH + str(actorName.td.a['href']).lstrip().rstrip()
+
+                # CHARACTER NAME
+                castMember['CHARACTER'] = re.sub(' +', ' ', str(actorName.find('td', class_='character').text).lstrip().rstrip().replace('\n', ''))
+
+                pageInfo['CAST'][str(actorName.td.a.text).lstrip().rstrip()] = castMember
+
+        # Add rest of values to their respective key
+        pageInfo['TITLE'] = str(title.text).replace('\xa0', '').rstrip()
+        pageInfo['YEAR'] = int(str(year.a.text))
+        pageInfo['RUNTIME'] = self.getRuntime(str(runtime.text).lstrip())
+        pageInfo['RATING'] = str(rating.text).lstrip().replace('|', '').replace(',', '').rstrip()
+        pageInfo['POSTER'] = str(poster.a.img['src'])
 
         return pageInfo
 
     def getNamePageInfo(self):
         pageInfo = {'NAME': str(),
                     'DOB': str(),
-                    'ACTOR': list(),
-                    'WRITER': list(),
-                    'DIRECTOR': list()
+                    'ACTOR_LIST': list(),
+                    'WRITER_LIST': list(),
+                    'DIRECTOR_LIST': list()
                     }
 
         # TODO: parse above name page info

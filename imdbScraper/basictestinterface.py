@@ -14,13 +14,13 @@ def main():
     search = s.Search()
     search.setInitTitleSearchURL()
     search.insertURLAddon("TITLE_TYPE", "feature")
-    search.insertURLAddon("TITLE_SEARCH", "Empire")
+    search.insertURLAddon("TITLE_SEARCH", "Baby Driver")
     searches = search.getSearches()
     print(searches)
 
     # PageInfo test
     info = s.PageInfo(searches[0][2])
-    print(info.getPageType())
+    print(info.getPageInfo())
 
     end = time.time()
 
