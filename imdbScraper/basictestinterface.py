@@ -6,20 +6,18 @@ def main():
 
     # Search test
     start = time.time()
-    s.get_url_content("https://www.twitter.com")
-    end = time.time()
-    print(end - start)
-
-    start = time.time()
     search = s.Search()
     search.setInitTitleSearchURL()
     search.insertURLAddon("TITLE_TYPE", "feature")
-    search.insertURLAddon("TITLE_SEARCH", "Baby Driver")
+    search.insertURLAddon("TITLE_SEARCH", "Empire")
     searches = search.getSearches()
     print(searches)
+    end = time.time()
+    print(end - start)
 
     # PageInfo test
-    info = s.PageInfo(searches[0][2])
+    start = time.time()
+    info = s.PageInfo('https://www.imdb.com/name/nm0000148/')
     print(info.getPageInfo())
 
     end = time.time()

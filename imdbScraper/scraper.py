@@ -29,7 +29,7 @@ def get_url_content(url):
 
     except RequestException as e:
         print(str(e))
-        return ''
+        return str()
 
 
 def checkResponse(response):
@@ -43,6 +43,7 @@ def checkResponse(response):
 class PageInfo:
     def __init__(self, url):
         self.url = url
+        self.urlContent = get_url_content(self.url)
 
     def getPageInfo(self):
         pageInfo = dict()
@@ -72,8 +73,7 @@ class PageInfo:
                     'WRITERS': list()
                     }
 
-        urlContent = get_url_content(self.url)
-        html = bs(urlContent, 'html.parser')
+        html = bs(self.urlContent, 'html.parser')
 
         # get everything in title bar
         titleBar = html.find('div', class_='titleBar')
@@ -151,18 +151,92 @@ class PageInfo:
 
         return pageInfo
 
+    def checkIfMovie(self, title):
+        isMovie = True
+        bannedKeywords = ['short',
+                          'Short',
+                          'Video Game',
+                          'TV'
+                          ]
+        if any(s in str(title.text) for s in bannedKeywords):
+            isMovie = False
+        if len(title.find_all('div', class_='filmo-episodes')) > 0:
+            isMovie = False
+        if len(title.find_all('a', class_='in_production')) > 0:
+            isMovie = False
+
+        return isMovie
+
     def getNamePageInfo(self):
         pageInfo = {'NAME': str(),
+                    'IMAGE': str(),
                     'DOB': str(),
                     'ACTOR_LIST': list(),
                     'WRITER_LIST': list(),
-                    'DIRECTOR_LIST': list()
+                    'DIRECTOR_LIST': list(),
+                    'PRODUCER_LIST': list()
                     }
 
-        # TODO: parse above name page info
+        html = bs(self.urlContent, 'html.parser')
+
+        # Get basic actor info:
+        actorInfo = html.find('div', class_='article name-overview')
+        actorHeaderInfo = actorInfo.find('td', {'id': 'overview-top'})
+        imgInfo = actorInfo.find('td', {'id': 'img_primary'})
+        filmography = html.find('div', {'id': 'filmography'}).find_all('div', class_='filmo-category-section')
+
+        # NAME:
+        pageInfo['NAME'] = str(actorHeaderInfo.h1.span.text)
+
+        # DOB:
+        dob = actorHeaderInfo.find('div', {'id': 'name-born-info'})
+
+        if str(dob) != 'None':
+            pageInfo['DOB'] = str(dob.time['datetime'])
+        else:
+            pageInfo['DOB'] = str()
+
+        # IMAGE:
+        image = imgInfo.div.a
+
+        if str(image) != 'None':
+            pageInfo['IMAGE'] = str(image.img['src'])
+        else:
+            pageInfo['IMAGE'] = str()
+
+        # Filmography (ACTOR_LIST, WRITER_LIST, DIRECTOR_LIST, PRODUCER-LIST):
+
+        for section in filmography:
+            titles = section.findAll('div', id=re.compile('^director-|^actor-|^writer-|^producer-'))
+
+            if len(titles) > 0:
+                for title in titles:
+                    titleInfo = list()
+
+                    if self.checkIfMovie(title):
+                        # Get Movie Title:
+                        film = str(title.b.a.text)
+                        titleInfo.append(film)
+
+                        # Get Movie Year:
+
+                        year = re.findall('\d+', str(title.find('span', class_='year_column').text))
+                        titleInfo.append(int(year[0]))
+
+                        # Get IMDB link:
+                        link = DEFAULT_PATH + str(title.b.a['href'])
+                        titleInfo.append(link)
+
+                        if 'actor-' in title['id']:
+                            pageInfo['ACTOR_LIST'].append(titleInfo)
+                        elif 'writer-' in title['id']:
+                            pageInfo['WRITER_LIST'].append(titleInfo)
+                        elif 'director-' in title['id']:
+                            pageInfo['DIRECTOR_LIST'].append(titleInfo)
+                        elif 'producer-' in title['id']:
+                            pageInfo['PRODUCER_LIST'].append(titleInfo)
 
         return pageInfo
-
 
 class Search:
     def __init__(self):
@@ -206,7 +280,8 @@ class Search:
                 searchInfo.append(name)
 
                 if self.getInitTitleSearchURL() in self.getSearchURL():
-                    searchInfo.append(listItem.find('span', class_='lister-item-year text-muted unbold').text)
+                    year = str(listItem.find('span', class_='lister-item-year text-muted unbold').text)
+                    searchInfo.append(int(str(year).replace('(', '').replace(')', '')))
 
                 searchInfo.append(str(DEFAULT_PATH + listItem.a['href']))
                 searchList.append(searchInfo)
