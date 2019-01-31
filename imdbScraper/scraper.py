@@ -207,7 +207,7 @@ class PageInfo:
         # Filmography (ACTOR_LIST, WRITER_LIST, DIRECTOR_LIST, PRODUCER-LIST):
 
         for section in filmography:
-            titles = section.findAll('div', id=re.compile('^director-|^actor-|^writer-|^producer-'))
+            titles = section.findAll('div', id=re.compile('^director-|^actor-|^writer-|^producer-|^actress-'))
 
             if len(titles) > 0:
                 for title in titles:
@@ -227,7 +227,7 @@ class PageInfo:
                         link = DEFAULT_PATH + str(title.b.a['href'])
                         titleInfo.append(link)
 
-                        if 'actor-' in title['id']:
+                        if any(atype in title['id'] for atype in ['actress-', 'actor-']):
                             pageInfo['ACTOR_LIST'].append(titleInfo)
                         elif 'writer-' in title['id']:
                             pageInfo['WRITER_LIST'].append(titleInfo)
