@@ -29,7 +29,7 @@ def get_url_content(url):
 
     except RequestException as e:
         print(str(e))
-        return str()
+        return ''
 
 
 def checkResponse(response):
@@ -73,81 +73,82 @@ class PageInfo:
                     'WRITERS': list()
                     }
 
-        html = bs(self.urlContent, 'html.parser')
+        if self.urlContent is not None:
+            html = bs(self.urlContent, 'html.parser')
 
-        # get everything in title bar
-        titleBar = html.find('div', class_='titleBar')
-        subText = titleBar.find('div', class_='subtext')
-        plot_summary = html.find('div', class_='plot_summary')
+            # get everything in title bar
+            titleBar = html.find('div', class_='titleBar')
+            subText = titleBar.find('div', class_='subtext')
+            plot_summary = html.find('div', class_='plot_summary')
 
-        # get the cast list
-        castList = html.find('table', class_='cast_list')
+            # get the cast list
+            castList = html.find('table', class_='cast_list')
 
-        # POSTER:
-        poster = html.find('div', class_='poster')
+            # POSTER:
+            poster = html.find('div', class_='poster')
 
-        # TITLE:
-        title = titleBar.find('div', class_='title_wrapper').h1
+            # TITLE:
+            title = titleBar.find('div', class_='title_wrapper').h1
 
-        # YEAR:
-        year = title.span
-        year.extract()
+            # YEAR:
+            year = title.span
+            year.extract()
 
-        # RATING:
-        rating = subText
+            # RATING:
+            rating = subText
 
-        # RUNTIME:
-        runtime = rating.time
-        runtime.extract()
+            # RUNTIME:
+            runtime = rating.time
+            runtime.extract()
 
-        # GENRES:
-        genres = rating.findAll('a')
+            # GENRES:
+            genres = rating.findAll('a')
 
-        for genre in genres:
-            pageInfo['GENRES'].append(str(genre.text).lower())
-            genre.extract()
+            for genre in genres:
+                pageInfo['GENRES'].append(str(genre.text).lower())
+                genre.extract()
 
-        # remove the release date from the GENRES list
-        pageInfo['GENRES'].pop()
+            # remove the release date from the GENRES list
+            pageInfo['GENRES'].pop()
 
-        # DIRECTOR and WRITERS:
-        summaryItems = plot_summary.find_all('div', class_='credit_summary_item')
+            # DIRECTOR and WRITERS:
+            summaryItems = plot_summary.find_all('div', class_='credit_summary_item')
 
-        for item in summaryItems:
-            if any(word in str(item.h4.text) for word in ['Writers:', 'Writer:', 'Directors:', 'Director:']):
-                names = item.findAll('a')
+            for item in summaryItems:
+                if any(word in str(item.h4.text) for word in ['Writers:', 'Writer:', 'Directors:', 'Director:']):
+                    names = item.findAll('a')
 
-                for name in names:
-                    if 'more credit' not in str(name.text):
-                        if any(word in str(item.h4.text) for word in ['Writers:', 'Writer:']):
-                            pageInfo['WRITERS'].append(str(name.text))
-                        else:
-                            pageInfo['DIRECTOR'].append(str(name.text))
+                    for name in names:
+                        if 'more credit' not in str(name.text):
+                            if any(word in str(item.h4.text) for word in ['Writers:', 'Writer:']):
+                                pageInfo['WRITERS'].append(str(name.text))
+                            else:
+                                pageInfo['DIRECTOR'].append(str(name.text))
 
-        # CAST:
-        castItems = castList.find_all('tr')
+            # CAST:
+            castItems = castList.find_all('tr')
 
-        for item in range(len(castItems)):
-            if item > 0:
-                castMember = dict()
+            for item in range(len(castItems)):
+                if item > 0:
+                    castMember = dict()
 
-                # ACTOR NAME
-                actorName = castItems[item]
-                actorName.td.extract()
+                    # ACTOR NAME
+                    actorName = castItems[item]
+                    actorName.td.extract()
 
-                castMember['ACTOR_LINK'] = DEFAULT_PATH + str(actorName.td.a['href']).lstrip().rstrip()
+                    castMember['ACTOR_LINK'] = DEFAULT_PATH + str(actorName.td.a['href']).lstrip().rstrip()
 
-                # CHARACTER NAME
-                castMember['CHARACTER'] = re.sub(' +', ' ', str(actorName.find('td', class_='character').text).lstrip().rstrip().replace('\n', ''))
+                    # CHARACTER NAME
+                    castMember['CHARACTER'] = re.sub(' +', ' ', str(actorName.find('td', class_='character').text).lstrip().rstrip().replace('\n', ''))
 
-                pageInfo['CAST'][str(actorName.td.a.text).lstrip().rstrip()] = castMember
+                    pageInfo['CAST'][str(actorName.td.a.text).lstrip().rstrip()] = castMember
 
-        # Add rest of values to their respective key
-        pageInfo['TITLE'] = str(title.text).replace('\xa0', '').rstrip()
-        pageInfo['YEAR'] = int(str(year.a.text))
-        pageInfo['RUNTIME'] = self.getRuntime(str(runtime.text).lstrip())
-        pageInfo['RATING'] = str(rating.text).lstrip().replace('|', '').replace(',', '').rstrip()
-        pageInfo['POSTER'] = str(poster.a.img['src'])
+            # Add rest of values to their respective key
+            pageInfo['TITLE'] = str(title.text).replace('\xa0', '').rstrip()
+            pageInfo['YEAR'] = int(str(year.a.text))
+            pageInfo['RUNTIME'] = self.getRuntime(str(runtime.text).lstrip())
+            pageInfo['RATING'] = str(rating.text).lstrip().replace('|', '').replace(',', '').rstrip()
+            pageInfo['POSTER'] = str(poster.a.img['src'])
 
         return pageInfo
 
@@ -177,64 +178,65 @@ class PageInfo:
                     'PRODUCER_LIST': list()
                     }
 
-        html = bs(self.urlContent, 'html.parser')
+        if self.urlContent is not None:
+            html = bs(self.urlContent, 'html.parser')
 
-        # Get basic actor info:
-        actorInfo = html.find('div', class_='article name-overview')
-        actorHeaderInfo = actorInfo.find('td', {'id': 'overview-top'})
-        imgInfo = actorInfo.find('td', {'id': 'img_primary'})
-        filmography = html.find('div', {'id': 'filmography'}).find_all('div', class_='filmo-category-section')
+            # Get basic actor info:
+            actorInfo = html.find('div', class_='article name-overview')
+            actorHeaderInfo = actorInfo.find('td', {'id': 'overview-top'})
+            imgInfo = actorInfo.find('td', {'id': 'img_primary'})
+            filmography = html.find('div', {'id': 'filmography'}).find_all('div', class_='filmo-category-section')
 
-        # NAME:
-        pageInfo['NAME'] = str(actorHeaderInfo.h1.span.text)
+            # NAME:
+            pageInfo['NAME'] = str(actorHeaderInfo.h1.span.text)
 
-        # DOB:
-        dob = actorHeaderInfo.find('div', {'id': 'name-born-info'})
+            # DOB:
+            dob = actorHeaderInfo.find('div', {'id': 'name-born-info'})
 
-        if str(dob) != 'None':
-            pageInfo['DOB'] = str(dob.time['datetime'])
-        else:
-            pageInfo['DOB'] = str()
+            if str(dob) != 'None':
+                pageInfo['DOB'] = str(dob.time['datetime'])
+            else:
+                pageInfo['DOB'] = str()
 
-        # IMAGE:
-        image = imgInfo.div.a
+            # IMAGE:
+            image = imgInfo.div.a
 
-        if str(image) != 'None':
-            pageInfo['IMAGE'] = str(image.img['src'])
-        else:
-            pageInfo['IMAGE'] = str()
+            if str(image) != 'None':
+                pageInfo['IMAGE'] = str(image.img['src'])
+            else:
+                pageInfo['IMAGE'] = str()
 
-        # Filmography (ACTOR_LIST, WRITER_LIST, DIRECTOR_LIST, PRODUCER-LIST):
+            # Filmography (ACTOR_LIST, WRITER_LIST, DIRECTOR_LIST, PRODUCER-LIST):
 
-        for section in filmography:
-            titles = section.findAll('div', id=re.compile('^director-|^actor-|^writer-|^producer-|^actress-'))
+            for section in filmography:
+                titles = section.findAll('div', id=re.compile('^director-|^actor-|^writer-|^producer-|^actress-'))
 
-            if len(titles) > 0:
-                for title in titles:
-                    titleInfo = list()
+                if len(titles) > 0:
+                    for title in titles:
+                        titleInfo = list()
 
-                    if self.checkIfMovie(title):
-                        # Get Movie Title:
-                        film = str(title.b.a.text)
-                        titleInfo.append(film)
+                        if self.checkIfMovie(title):
+                            # Get Movie Title:
+                            film = str(title.b.a.text)
+                            titleInfo.append(film)
 
-                        # Get Movie Year:
+                            # Get Movie Year:
 
-                        year = re.findall('\d+', str(title.find('span', class_='year_column').text))
-                        titleInfo.append(int(year[0]))
+                            year = re.findall('\d+', str(title.find('span', class_='year_column').text))
+                            titleInfo.append(int(year[0]))
 
-                        # Get IMDB link:
-                        link = DEFAULT_PATH + str(title.b.a['href'])
-                        titleInfo.append(link)
+                            # Get IMDB link:
+                            link = DEFAULT_PATH + str(title.b.a['href'])
+                            titleInfo.append(link)
 
-                        if any(atype in title['id'] for atype in ['actress-', 'actor-']):
-                            pageInfo['ACTOR_LIST'].append(titleInfo)
-                        elif 'writer-' in title['id']:
-                            pageInfo['WRITER_LIST'].append(titleInfo)
-                        elif 'director-' in title['id']:
-                            pageInfo['DIRECTOR_LIST'].append(titleInfo)
-                        elif 'producer-' in title['id']:
-                            pageInfo['PRODUCER_LIST'].append(titleInfo)
+                            if any(atype in title['id'] for atype in ['actress-', 'actor-']):
+                                pageInfo['ACTOR_LIST'].append(titleInfo)
+                            elif 'writer-' in title['id']:
+                                pageInfo['WRITER_LIST'].append(titleInfo)
+                            elif 'director-' in title['id']:
+                                pageInfo['DIRECTOR_LIST'].append(titleInfo)
+                            elif 'producer-' in title['id']:
+                                pageInfo['PRODUCER_LIST'].append(titleInfo)
 
         return pageInfo
 
@@ -264,7 +266,7 @@ class Search:
         searchList = list()
         urlContent = get_url_content(self.getSearchURL())
 
-        if urlContent != '' and self.getSearchURL() != self.getInitTitleSearchURL():
+        if urlContent is not None and self.getSearchURL() != self.getInitTitleSearchURL():
             html = bs(urlContent, 'html.parser')
             rawList = html.find_all('div', class_='lister-item mode-advanced', limit=10)
 

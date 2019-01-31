@@ -17,8 +17,8 @@ def main():
 
     # PageInfo test
     start = time.time()
-    info = s.PageInfo('https://www.imdb.com/name/nm1270857/').getPageInfo()
-    print(info)
+    info = s.PageInfo('https://www.imdb.com/name/nm0000007/').getPageInfo()
+    print(info['ACTOR_LIST'])
 
     end = time.time()
 
