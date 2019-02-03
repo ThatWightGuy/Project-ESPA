@@ -92,14 +92,19 @@ class PageInfo:
 
             # YEAR:
             year = title.span
-            year.extract()
+
+            if year is not None:
+                year.extract()
+                pageInfo['YEAR'] = int(str(year.a.text))
 
             # RATING:
             rating = subText
 
             # RUNTIME:
             runtime = rating.time
-            runtime.extract()
+            if runtime is not None:
+                runtime.extract()
+                pageInfo['RUNTIME'] = self.getRuntime(str(runtime.text).lstrip())
 
             # GENRES:
             genres = rating.findAll('a')
@@ -126,27 +131,27 @@ class PageInfo:
                                 pageInfo['DIRECTOR'].append(str(name.text))
 
             # CAST:
-            castItems = castList.find_all('tr')
+            if castList is not None:
+                castItems = castList.find_all('tr')
 
-            for item in range(len(castItems)):
-                if item > 0:
-                    castMember = dict()
+                for item in range(len(castItems)):
+                    if item > 0:
+                        castMember = dict()
 
-                    # ACTOR NAME
-                    actorName = castItems[item]
-                    actorName.td.extract()
+                        # ACTOR NAME
+                        actorName = castItems[item]
+                        actorName.td.extract()
 
-                    castMember['ACTOR_LINK'] = DEFAULT_PATH + str(actorName.td.a['href']).lstrip().rstrip()
+                        castMember['ACTOR_LINK'] = DEFAULT_PATH + str(actorName.td.a['href']).lstrip().rstrip()
 
-                    # CHARACTER NAME
-                    castMember['CHARACTER'] = re.sub(' +', ' ', str(actorName.find('td', class_='character').text).lstrip().rstrip().replace('\n', ''))
+                        # CHARACTER NAME
+                        castMember['CHARACTER'] = re.sub(' +', ' ', str(actorName.find('td', class_='character').text).lstrip().rstrip().replace('\n', ''))
 
-                    pageInfo['CAST'][str(actorName.td.a.text).lstrip().rstrip()] = castMember
+                        pageInfo['CAST'][str(actorName.td.a.text).lstrip().rstrip()] = castMember
 
             # Add rest of values to their respective key
             pageInfo['TITLE'] = str(title.text).replace('\xa0', '').rstrip()
-            pageInfo['YEAR'] = int(str(year.a.text))
-            pageInfo['RUNTIME'] = self.getRuntime(str(runtime.text).lstrip())
+
             pageInfo['RATING'] = str(rating.text).lstrip().replace('|', '').replace(',', '').rstrip()
             pageInfo['POSTER'] = str(poster.a.img['src'])
 

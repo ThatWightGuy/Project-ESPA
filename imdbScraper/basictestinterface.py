@@ -3,7 +3,6 @@ import time
 import scraper as s
 
 def main():
-
     # Search test
     start = time.time()
     search = s.Search()
@@ -17,8 +16,8 @@ def main():
 
     # PageInfo test
     start = time.time()
-    info = s.PageInfo('https://www.imdb.com/name/nm0000007/').getPageInfo()
-    print(info['ACTOR_LIST'])
+    info = s.PageInfo('https://www.imdb.com/title/tt7286456/').getPageInfo()
+    print(list(info['CAST'].keys()))
 
     end = time.time()
 
