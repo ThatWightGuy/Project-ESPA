@@ -1,11 +1,14 @@
 import webbrowser
 import time
-import scraper as s
+import imdbscraper as iws
+import re
+
+import ScrapeToDatabase as STD
 
 def main():
     # Search test
-    start = time.time()
-    search = s.Search()
+    '''start = time.time()
+    search = iws.Search()
     search.setInitTitleSearchURL()
     search.insertURLAddon("TITLE_TYPE", "feature")
     search.insertURLAddon("TITLE_SEARCH", "Empire")
@@ -16,12 +19,14 @@ def main():
 
     # PageInfo test
     start = time.time()
-    info = s.PageInfo('https://www.imdb.com/title/tt7286456/').getPageInfo()
-    print(list(info['CAST'].keys()))
+    info = iws.PageInfo('https://www.imdb.com/title/tt7286456/').getPageInfo()
+    print(info)
 
     end = time.time()
 
-    print(end-start)
+    print(end-start)'''
+
+    print(re.findall('(tt|nm)(\d{7})', 'https://www.imdb.com/title/tt7286456/'))
 
 if __name__ == '__main__':
     main()
