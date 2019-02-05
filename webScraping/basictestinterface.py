@@ -2,8 +2,7 @@ import webbrowser
 import time
 import imdbscraper as iws
 import re
-
-import ScrapeToDatabase as STD
+import ScrapeToDatabase as std
 
 def main():
     # Search test

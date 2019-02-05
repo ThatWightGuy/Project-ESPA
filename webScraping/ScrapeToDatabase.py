@@ -2,6 +2,7 @@ import imdbscraper as iws
 import mysql.connector
 import re
 
+
 class ConvertScrape:
     def __init__(self, url):
         self.url = url
@@ -35,3 +36,4 @@ class ConvertScrape:
         # TODO: create specific job IDs from scrape info
 
         return None
+
